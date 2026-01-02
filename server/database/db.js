@@ -1,6 +1,6 @@
-import pkg from "pg";
+// import pkg from "pg";
 
-const { Client } = pkg;
+// const { Client } = pkg;
 
 // const database = new Client({
 //   user: "postgres",
@@ -18,12 +18,18 @@ const { Client } = pkg;
 //   process.exit(1);
 // }
 
+import pkg from "pg";
+const { Client } = pkg;
+
+const isRenderDB = process.env.DB_URL?.includes("render.com");
+
 const database = new Client({
   connectionString: process.env.DB_URL,
-  ssl:
-    process.env.NODE_ENV === "production"
-      ? { rejectUnauthorized: false }
-      : false,
+  ssl: isRenderDB
+    ? { rejectUnauthorized: false }
+    : false,
 });
 
 export default database;
+
+

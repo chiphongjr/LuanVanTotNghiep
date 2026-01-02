@@ -24,14 +24,11 @@ import jwt from "jsonwebtoken";
 // };
 
 // Thay đổi sameSite và secure cho môi trường Production (HTTPS)
+// Thay đổi tạm thời trong utils/jwtToken.js để kiểm tra
 export const sendToken = (user, statusCode, message, res) => {
   const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET_KEY, {
     expiresIn: process.env.JWT_EXPIRES_IN,
-  }); // Kiểm tra môi trường để đặt cấu hình bảo mật cookie
-
-  const isProduction =
-    process.env.NODE_ENV === "Production" ||
-    process.env.NODE_ENV === "production";
+  });
 
   res
     .status(statusCode)
@@ -40,9 +37,9 @@ export const sendToken = (user, statusCode, message, res) => {
         Date.now() + process.env.COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
       ),
       httpOnly: true,
-      // CẤU HÌNH QUAN TRỌNG CHO RENDER/PRODUCTION:
-      sameSite: isProduction ? "None" : "lax", // Dùng 'None' nếu Frontend và Backend khác domain
-      secure: isProduction ? true : false, // Bắt buộc phải là 'true' khi chạy qua HTTPS (Render)
+      // SỬA CỨNG ĐỂ LOẠI TRỪ LỖI NODE_ENV
+      sameSite: "None",
+      secure: true,
     })
     .json({
       success: true,

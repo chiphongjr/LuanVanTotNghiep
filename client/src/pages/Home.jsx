@@ -4,11 +4,12 @@ import CategoryGrid from "../components/Home/CategoryGrid";
 import ProductSlider from "../components/Home/ProductSlider";
 import FeatureSection from "../components/Home/FeatureSection";
 import { useSelector } from "react-redux";
+import { axiosInstance } from "../lib/axios";
 const Index = () => {
   const { topRatedProducts, newProducts } = useSelector(
     (state) => state.product
   );
-
+console.log("Axios Base URL:", axiosInstance.defaults.baseURL);
   return (
     <div>
       <HeroSlider />

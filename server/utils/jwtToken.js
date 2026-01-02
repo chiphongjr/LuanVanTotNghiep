@@ -40,6 +40,7 @@ export const sendToken = (user, statusCode, message, res) => {
       // SỬA CỨNG ĐỂ LOẠI TRỪ LỖI NODE_ENV
       sameSite: "None",
       secure: true,
+      domain: 'luanvantotnghiep-soto.onrender.com',
     })
     .json({
       success: true,

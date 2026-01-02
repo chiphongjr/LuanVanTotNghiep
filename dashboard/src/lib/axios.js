@@ -16,3 +16,4 @@ export const axiosInstance = axios.create({
       : "https://luanvantotnghiep-soto.onrender.com/api/v1",
   withCredentials: true,
 });
+console.log("Axios Base URL lib:", axiosInstance.defaults.baseURL);

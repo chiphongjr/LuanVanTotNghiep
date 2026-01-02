@@ -36,7 +36,7 @@ export const sendToken = (user, statusCode, message, res) => {
       expires: new Date(
         Date.now() + process.env.COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
       ),
-      httpOnly: true,
+      // httpOnly: true,
       // SỬA CỨNG ĐỂ LOẠI TRỪ LỖI NODE_ENV
       sameSite: "None",
       secure: true,

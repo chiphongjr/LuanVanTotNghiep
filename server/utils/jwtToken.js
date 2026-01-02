@@ -36,11 +36,9 @@ export const sendToken = (user, statusCode, message, res) => {
       expires: new Date(
         Date.now() + process.env.COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
       ),
-      // httpOnly: true,
-      // SỬA CỨNG ĐỂ LOẠI TRỪ LỖI NODE_ENV
+      httpOnly: true,
       sameSite: "None",
       secure: true,
-      domain: 'https://luanvantotnghiep-soto.onrender.com/api/v1',
     })
     .json({
       success: true,

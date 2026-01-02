@@ -14,6 +14,7 @@ export const sendToken = (user, statusCode, message, res) => {
       httpOnly: true,
       sameSite: "none",
       secure: true,
+      path:"/"
     })
     .json({
       success: true,

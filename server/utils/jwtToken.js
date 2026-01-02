@@ -14,7 +14,8 @@ export const sendToken = (user, statusCode, message, res) => {
       httpOnly: true,
       sameSite: "none",
       secure: true,
-      path:"/"
+      path:"/",
+      domain:"luanvantotnghiep-soto.onrender.com"
     })
     .json({
       success: true,

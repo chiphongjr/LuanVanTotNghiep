@@ -20,7 +20,7 @@ config({ path: "./config/config.env" });
 
 app.use(
   cors({
-    origin: [process.env.FRONTEND_URL, process.env.DASHBOARD_URL],
+    origin: [process.env.FRONTEND_URL, process.env.DASHBOARD_URL,"https://luanvantotnghiep-soto.onrender.com/api/v1"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
@@ -107,7 +107,10 @@ app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/order", orderRouter);
 app.use("/api/v1/cart", cartRouter);
 
-createTables();
+if (process.env.NODE_ENV !== "production") {
+  createTables();
+}
+
 
 app.use(errorMiddleware);
 

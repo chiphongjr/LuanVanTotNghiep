@@ -16,7 +16,7 @@ import database from "./database/db.js";
 
 const app = express();
 
-config({ path: "./config/config.env" });
+config({ path: "./config/config.env" }); 
 
 app.use(
   cors({

@@ -21,24 +21,19 @@
 
 
 import pkg from "pg";
-import dotenv from "dotenv";
-dotenv.config();
-
 const { Client } = pkg;
 
 const database = new Client({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false, // cần khi kết nối DB online
-  },
+  connectionString: process.env.DB_URL,
+  ssl: process.env.NODE_ENV === "production"
+    ? { rejectUnauthorized: false }
+    : false,
 });
 
-try {
-  await database.connect();
-  console.log("Connect db successfully");
-} catch (error) {
-  console.error("Connect db fail", error);
-  process.exit(1);
-}
+await database.connect();
+console.log("✅ Database connected");
 
 export default database;
+
+
+

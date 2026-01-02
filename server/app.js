@@ -20,7 +20,7 @@ config({ path: "./config/config.env" });
 
 app.use(
   cors({
-    origin: ["https://admin-jrshop.vercel.app/login", "https://admin-jrshop.vercel.app/login"],
+    origin: ["https://admin-jrshop.vercel.app", "https://jrshop.vercel.app"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })

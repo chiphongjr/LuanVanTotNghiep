@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { CreditCard, Lock, X } from "lucide-react";
+import { CreditCard, CreditCardIcon, Lock, X } from "lucide-react";
 import { toast } from "react-toastify";
 
 import { clearCart } from "../store/slices/cartSlice";
@@ -76,55 +76,67 @@ const PaymentForm = () => {
 
   return (
     <form
-      className="max-w-md mx-auto bg-white p-6 rounded-xl shadow"
       onSubmit={handleSubmit}
+      className="max-w-md mx-auto bg-white p-6 rounded-xl shadow"
     >
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
+      {/* ===== HEADER ===== */}
+      <div className="flex items-center gap-3 mb-4">
         <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-          <CreditCard className="w-5 h-5 text-white" />
+          <CreditCardIcon className="w-5 h-5 text-white" />
         </div>
-        <h2 className="text-xl font-semibold text-gray-900">Thanh toán thẻ</h2>
+        <h2 className="text-xl font-semibold">Thanh toán online</h2>
       </div>
 
-      {/* Card Input */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-foreground mb-2">
-          Card Details *
+      {/* ===== STRIPE INFO (QUAN TRỌNG) ===== */}
+      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
+        Hệ thống sử dụng <b>Stripe</b> (demo).  
+        <br />
+        Hỗ trợ <b>Visa / MasterCard</b>.
+        <br />
+        <b>Thẻ test:</b>
+        <ul className="list-disc ml-5 mt-1">
+          <li>4242 4242 4242 4242</li>
+          <li>MM/YY: bất kỳ – CVC: 123</li>
+        </ul>
+      </div>
+
+      {/* ===== CARD INPUT ===== */}
+      <div className="mb-5">
+        <label className="block text-sm font-medium mb-2">
+          Thông tin thẻ *
         </label>
-        <div className="px-4 py-3 border rounded-lg">
+        <div className="border rounded-lg px-4 py-3">
           <CardElement options={{ style: { base: { fontSize: "16px" } } }} />
         </div>
       </div>
 
-      {/* Secure info */}
-      <div className="flex items-center gap-2 mb-6 p-3 bg-gray-50 rounded">
+      {/* ===== SECURITY NOTE ===== */}
+      <div className="flex items-center gap-2 mb-5 p-3 bg-gray-50 rounded">
         <Lock className="w-5 h-5 text-green-600" />
         <span className="text-sm text-gray-600">
           Thông tin thẻ được mã hóa và bảo mật
         </span>
       </div>
 
-      {/* Submit button */}
+      {/* ===== SUBMIT ===== */}
       <button
         type="submit"
         disabled={!stripe || isProcessing}
-        className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg flex justify-center items-center gap-2 mb-3 disabled:opacity-50"
+        className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold disabled:opacity-50"
       >
         {isProcessing ? "Đang xử lý..." : "Hoàn tất thanh toán"}
       </button>
 
-      {/* Cancel Payment button */}
+      {/* ===== CANCEL ===== */}
       <button
         type="button"
         onClick={handleCancelPayment}
-        className="w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg flex justify-center items-center gap-2"
+        className="w-full mt-3 py-3 bg-red-600 text-white rounded-lg flex justify-center items-center gap-2"
       >
-        <X className="w-5 h-5" />
+        <X className="w-4 h-4" />
         Hủy thanh toán
       </button>
 
-      {/* Error message */}
       {errorMessage && (
         <p className="mt-4 text-sm text-red-500">{errorMessage}</p>
       )}

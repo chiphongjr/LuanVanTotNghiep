@@ -64,10 +64,19 @@ export const getUser = catchAsyncErrors(async (req, res, next) => {
 });
 
 export const logout = catchAsyncErrors(async (req, res, next) => {
+  const isProd = process.env.NODE_ENV === "production";
+
   res
+    .clearCookie("token", {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd? "none" : "lax",
+    })
     .status(200)
-    .cookie("token", "", { expires: new Date(Date.now()), httpOnly: true })
-    .json({ success: true, message: "Đăng xuất thành công" });
+    .json({
+      success: true,
+      message: "Đăng xuất thành công",
+    });
 });
 
 export const forgotPassword = catchAsyncErrors(async (req, res, next) => {

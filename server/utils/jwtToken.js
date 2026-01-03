@@ -5,6 +5,9 @@ export const sendToken = (user, statusCode, message, res) => {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 
+
+    const isProd = process.env.NODE_ENV === "production";
+
   res
     .status(statusCode)
     .cookie("token", token, {
@@ -12,8 +15,8 @@ export const sendToken = (user, statusCode, message, res) => {
         Date.now() + process.env.COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
       ),
       httpOnly: true,
-      sameSite: "none",
-      secure: true,
+      sameSite: isProd ? "none" : "lax",
+      secure: isProd,
     })
     .json({
       success: true,

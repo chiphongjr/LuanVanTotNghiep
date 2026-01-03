@@ -104,7 +104,7 @@ export const updatePassword = createAsyncThunk(
   }
 );
 
-export const updateProfile = createAsyncThunk(
+export const  updateProfile = createAsyncThunk(
   "auth/profile/update",
   async (data, thunkAPI) => {
     try {
@@ -118,12 +118,10 @@ export const updateProfile = createAsyncThunk(
   }
 );
 
-const userFromLocal = localStorage.getItem("authUser");
-
 const authSlice = createSlice({
   name: "auth",
   initialState: {
-    authUser: userFromLocal ? JSON.parse(userFromLocal) : null,
+    authUser: null,
     isSigningUp: false,
     isLoggingIn: false,
     isUpdatingProfile: false,
@@ -139,7 +137,6 @@ const authSlice = createSlice({
       .addCase(register.fulfilled, (state, action) => {
         state.isSigningUp = false;
         state.authUser = action.payload;
-        localStorage.setItem("authUser", JSON.stringify(action.payload.user));
       })
       .addCase(register.rejected, (state) => {
         state.isSigningUp = false;
@@ -151,7 +148,6 @@ const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.isLoggingIn = false;
         state.authUser = action.payload;
-        localStorage.setItem("authUser", JSON.stringify(action.payload.user));
       })
       .addCase(login.rejected, (state) => {
         state.isLoggingIn = false;
@@ -171,7 +167,6 @@ const authSlice = createSlice({
       })
 
       .addCase(logout.fulfilled, (state) => {
-        localStorage.removeItem("authUser");
         state.authUser = null;
       })
       .addCase(logout.rejected, (state) => {

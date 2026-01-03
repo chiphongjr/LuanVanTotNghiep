@@ -89,14 +89,14 @@ const PaymentForm = () => {
 
       {/* ===== STRIPE INFO (QUAN TRỌNG) ===== */}
       <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
-        Hệ thống sử dụng <b>Stripe</b> (demo).  
+        Hệ thống sử dụng <b>Stripe</b> (demo).
         <br />
         Hỗ trợ <b>Visa / MasterCard</b>.
         <br />
         <b>Thẻ test:</b>
         <ul className="list-disc ml-5 mt-1">
           <li>4242 4242 4242 4242</li>
-          <li>MM/YY: bất kỳ – CVC: 123</li>
+          <li>MM/YY: 04/44 – CVC: 444 - ZIP: 44444</li>
         </ul>
       </div>
 

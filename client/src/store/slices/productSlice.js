@@ -72,10 +72,10 @@ export const postReview = createAsyncThunk(
 
 export const deleteReview = createAsyncThunk(
   "product/delete/review",
-  async ({ productId, reviewId }, thunkAPI) => {
+  async ({  reviewId }, thunkAPI) => {
     try {
       const res = await axiosInstance.delete(
-        `/product/delete/review/${productId}`
+        `/product/delete/review/${reviewId}`
       );
       toast.success(res.data.message);
       return reviewId;
@@ -166,35 +166,49 @@ const productSlice = createSlice({
       .addCase(postReview.pending, (state) => {
         state.isPostingReview = true;
       })
+      // .addCase(postReview.fulfilled, (state, action) => {
+      //   state.isPostingReview = false;
+      //   // state.productReviews = [action.payload, ...state.productReviews];
+
+      //   const newReview = action.payload.review;
+      //   const authUser = action.payload.authUser;
+
+      //   const existingReviewIndex = state.productReviews.findIndex(
+      //     (rev) => rev.reviewer?.id === newReview.user_id
+      //   );
+      //   if (existingReviewIndex !== -1) {
+      //     state.productReviews[existingReviewIndex].rating = Number(
+      //       newReview.rating
+      //     );
+      //     state.productReviews[existingReviewIndex].comment = newReview.comment;
+      //   } else {
+      //     state.productReviews = [
+      //       {
+      //         ...newReview,
+      //         reviewer: {
+      //           id: authUser?.id,
+      //           name: authUser?.name,
+      //           avatar: authUser?.avatar?.url,
+      //         },
+      //       },
+      //       ...state.productReviews,
+      //     ];
+      //   }
+      // })
+
       .addCase(postReview.fulfilled, (state, action) => {
-        state.isPostingReview = false;
-        // state.productReviews = [action.payload, ...state.productReviews];
+  state.isPostingReview = false;
 
-        const newReview = action.payload.review;
-        const authUser = action.payload.authUser;
+  state.productReviews.unshift({
+    ...action.payload.review,
+    reviewer: {
+      id: action.payload.authUser.id,
+      name: action.payload.authUser.name,
+      avatar: action.payload.authUser.avatar,
+    },
+  });
+})
 
-        const existingReviewIndex = state.productReviews.findIndex(
-          (rev) => rev.reviewer?.id === newReview.user_id
-        );
-        if (existingReviewIndex !== -1) {
-          state.productReviews[existingReviewIndex].rating = Number(
-            newReview.rating
-          );
-          state.productReviews[existingReviewIndex].comment = newReview.comment;
-        } else {
-          state.productReviews = [
-            {
-              ...newReview,
-              reviewer: {
-                id: authUser?.id,
-                name: authUser?.name,
-                avatar: authUser?.avatar?.url,
-              },
-            },
-            ...state.productReviews,
-          ];
-        }
-      })
       .addCase(postReview.rejected, (state) => {
         state.isPostingReview = false;
       })

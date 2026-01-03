@@ -357,6 +357,93 @@ export const fetchSingleProduct = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
+//1 user review 1 lan
+// export const postProductReview = catchAsyncErrors(async (req, res, next) => {
+//   const { productId } = req.params;
+//   const { rating, comment } = req.body;
+
+//   if (!rating || !comment) {
+//     return next(new ErrorHandler("Vui lòng chấm sao và để lại bình luận", 400));
+//   }
+
+//   if (rating < 1 || rating > 5) {
+//     return next(new ErrorHandler("Số sao phải từ 1 đến 5", 400));
+//   }
+
+//   const purchasheCheckQuery = `
+//     SELECT oi.product_id
+//     FROM order_items oi
+//     JOIN orders o ON o.id = oi.order_id
+//     JOIN payments p ON p.order_id = o.id
+//     WHERE o.buyer_id = $1
+//     AND oi.product_id = $2
+//     and o.order_status = 'Delivered'
+//     AND p.payment_status = 'Paid'
+//     LIMIT 1
+//   `;
+
+//   const { rows } = await database.query(purchasheCheckQuery, [
+//     req.user.id,
+//     productId,
+//   ]);
+
+//   if (rows.length === 0) {
+//     return res.status(403).json({
+//       success: false,
+//       message: "Bạn chỉ được đánh giá sản phẩm đã mua",
+//     });
+//   }
+
+//   const product = await database.query("SELECT * FROM products WHERE id = $1", [
+//     productId,
+//   ]);
+//   if (product.rows.length === 0) {
+//     return next(new ErrorHandler("Không tìm thấy sản phẩm", 404));
+//   }
+
+//   const isAlreadyReviewed = await database.query(
+//     `
+//     SELECT * FROM reviews WHERE product_id = $1 AND user_id = $2
+//     `,
+//     [productId, req.user.id]
+//   );
+
+//   let review;
+
+//   if (isAlreadyReviewed.rows.length > 0) {
+//     review = await database.query(
+//       "UPDATE reviews SET rating = $1, comment = $2 WHERE product_id = $3 AND user_id = $4 RETURNING *",
+//       [rating, comment, productId, req.user.id]
+//     );
+//   } else {
+//     review = await database.query(
+//       "INSERT INTO reviews (product_id, user_id, rating, comment) VALUES ($1, $2, $3, $4) RETURNING *",
+//       [productId, req.user.id, rating, comment]
+//     );
+//   }
+
+//   const allReviews = await database.query(
+//     `SELECT AVG(rating) AS avg_rating FROM reviews WHERE product_id = $1`,
+//     [productId]
+//   );
+
+//   const newAvgRating = allReviews.rows[0].avg_rating;
+
+//   const updatedProduct = await database.query(
+//     `
+//         UPDATE products SET ratings = $1 WHERE id = $2 RETURNING *
+//         `,
+//     [newAvgRating, productId]
+//   );
+
+//   res.status(200).json({
+//     success: true,
+//     message: "Đánh giá đã được đăng",
+//     review: review.rows[0],
+//     product: updatedProduct.rows[0],
+//   });
+// });
+
 export const postProductReview = catchAsyncErrors(async (req, res, next) => {
   const { productId } = req.params;
   const { rating, comment } = req.body;
@@ -369,16 +456,17 @@ export const postProductReview = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Số sao phải từ 1 đến 5", 400));
   }
 
+  // check đã mua (GIỮ NGUYÊN – rất tốt)
   const purchasheCheckQuery = `
-    SELECT oi.product_id
+    SELECT 1
     FROM order_items oi
     JOIN orders o ON o.id = oi.order_id
     JOIN payments p ON p.order_id = o.id
     WHERE o.buyer_id = $1
-    AND oi.product_id = $2
-    and o.order_status = 'Delivered'
-    AND p.payment_status = 'Paid'
-    LIMIT 1 
+      AND oi.product_id = $2
+      AND o.order_status = 'Delivered'
+      AND p.payment_status = 'Paid'
+    LIMIT 1
   `;
 
   const { rows } = await database.query(purchasheCheckQuery, [
@@ -387,94 +475,93 @@ export const postProductReview = catchAsyncErrors(async (req, res, next) => {
   ]);
 
   if (rows.length === 0) {
-    return res.status(403).json({
-      success: false,
-      message: "Bạn chỉ được đánh giá sản phẩm đã mua",
-    });
+    return next(new ErrorHandler("Bạn chỉ được đánh giá sản phẩm đã mua", 403));
   }
 
-  const product = await database.query("SELECT * FROM products WHERE id = $1", [
-    productId,
-  ]);
-  if (product.rows.length === 0) {
-    return next(new ErrorHandler("Không tìm thấy sản phẩm", 404));
-  }
-
-  const isAlreadyReviewed = await database.query(
+  // ✅ LUÔN INSERT
+  const review = await database.query(
     `
-    SELECT * FROM reviews WHERE product_id = $1 AND user_id = $2
+    INSERT INTO reviews (product_id, user_id, rating, comment)
+    VALUES ($1, $2, $3, $4)
+    RETURNING *
     `,
-    [productId, req.user.id]
+    [productId, req.user.id, rating, comment]
   );
 
-  let review;
-
-  if (isAlreadyReviewed.rows.length > 0) {
-    review = await database.query(
-      "UPDATE reviews SET rating = $1, comment = $2 WHERE product_id = $3 AND user_id = $4 RETURNING *",
-      [rating, comment, productId, req.user.id]
-    );
-  } else {
-    review = await database.query(
-      "INSERT INTO reviews (product_id, user_id, rating, comment) VALUES ($1, $2, $3, $4) RETURNING *",
-      [productId, req.user.id, rating, comment]
-    );
-  }
-
-  const allReviews = await database.query(
+  // cập nhật rating trung bình
+  const avg = await database.query(
     `SELECT AVG(rating) AS avg_rating FROM reviews WHERE product_id = $1`,
     [productId]
   );
 
-  const newAvgRating = allReviews.rows[0].avg_rating;
+  await database.query(`UPDATE products SET ratings = $1 WHERE id = $2`, [
+    avg.rows[0].avg_rating,
+    productId,
+  ]);
 
-  const updatedProduct = await database.query(
-    `
-        UPDATE products SET ratings = $1 WHERE id = $2 RETURNING *
-        `,
-    [newAvgRating, productId]
-  );
-
-  res.status(200).json({
+  res.status(201).json({
     success: true,
     message: "Đánh giá đã được đăng",
     review: review.rows[0],
-    product: updatedProduct.rows[0],
   });
 });
 
 export const deleteReview = catchAsyncErrors(async (req, res, next) => {
-  const { productId } = req.params;
+  const { reviewId } = req.params;
+
   const review = await database.query(
-    "DELETE FROM reviews WHERE product_id = $1 AND user_id = $2 RETURNING *",
-    [productId, req.user.id]
+    `
+    DELETE FROM reviews 
+    WHERE id = $1 AND user_id = $2 
+    RETURNING *
+    `,
+    [reviewId, req.user.id]
   );
 
   if (review.rows.length === 0) {
-    return next(new ErrorHandler("Review not found.", 404));
+    return next(new ErrorHandler("Review không tồn tại", 404));
   }
-
-  const allReviews = await database.query(
-    `SELECT AVG(rating) AS avg_rating FROM reviews WHERE product_id = $1`,
-    [productId]
-  );
-
-  const newAvgRating = allReviews.rows[0].avg_rating;
-
-  const updatedProduct = await database.query(
-    `
-        UPDATE products SET ratings = $1 WHERE id = $2 RETURNING *
-        `,
-    [newAvgRating, productId]
-  );
 
   res.status(200).json({
     success: true,
-    message: "Your review has been deleted.",
+    message: "Đã xóa đánh giá",
     review: review.rows[0],
-    product: updatedProduct.rows[0],
   });
 });
+
+//1 user xoa 1 review
+// export const deleteReview = catchAsyncErrors(async (req, res, next) => {
+//   const { productId } = req.params;
+//   const review = await database.query(
+//     "DELETE FROM reviews WHERE product_id = $1 AND user_id = $2 RETURNING *",
+//     [productId, req.user.id]
+//   );
+
+//   if (review.rows.length === 0) {
+//     return next(new ErrorHandler("Review not found.", 404));
+//   }
+
+//   const allReviews = await database.query(
+//     `SELECT AVG(rating) AS avg_rating FROM reviews WHERE product_id = $1`,
+//     [productId]
+//   );
+
+//   const newAvgRating = allReviews.rows[0].avg_rating;
+
+//   const updatedProduct = await database.query(
+//     `
+//         UPDATE products SET ratings = $1 WHERE id = $2 RETURNING *
+//         `,
+//     [newAvgRating, productId]
+//   );
+
+//   res.status(200).json({
+//     success: true,
+//     message: "Your review has been deleted.",
+//     review: review.rows[0],
+//     product: updatedProduct.rows[0],
+//   });
+// });
 
 export const fetchAIFilteredProducts = catchAsyncErrors(
   async (req, res, next) => {

@@ -1,5 +1,5 @@
 import { Menu, User, ShoppingCart, Search } from "lucide-react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { toggleAuthPopup, toggleSidebar } from "../../store/slices/popupSlice";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -8,7 +8,7 @@ import { axiosInstance } from "../../lib/axios";
 import { formatVND } from "../../utils/formatVND";
 
 const Navbar = () => {
-  // const { cart } = useSelector((state) => state.cart);
+  const { cart } = useSelector((state) => state.cart);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
@@ -50,7 +50,7 @@ useEffect(() => {
   };
 
   // const cartItemsCount = cart?.items?.reduce((total, item) => total + item.quantity, 0) || 0;
-
+  const cartItemsCount = cart?.cart_total_quantity || 0
   return (
     <nav className="fixed top-0 left-0 w-full z-50 bg-white border-b shadow">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-2 ">
@@ -130,11 +130,11 @@ useEffect(() => {
             className="relative p-2 rounded hover:bg-gray-200"
           >
             <ShoppingCart className="w-5 h-5" />
-            {/* {cartItemsCount > 0 && (
+             {cartItemsCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
                 {cartItemsCount}
               </span>
-            )} */}
+            )} 
           </button>
         </div>
       </div>

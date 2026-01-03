@@ -119,7 +119,6 @@ const ReviewsContainer = ({ product, productReviews }) => {
                     onClick={() =>
                       dispatch(
                         deleteReview({
-                          productId: product.id,
                           reviewId: review.review_id,
                         })
                       )

@@ -59,7 +59,7 @@ export const createProduct = catchAsyncErrors(async (req, res, next) => {
   const searchText = `${name} ${description}`;
 
   const product = await database.query(
-    `INSERT INTO products (name, description, price, category_id, stock, images, created_by,ts_vector) VALUES ($1, $2, $3, $4, $5, $6, $7,to_tsvector('simple',$8)) RETURNING *`,
+    `INSERT INTO products (name, description, price, category_id, stock, images, created_by, search_vector) VALUES ($1, $2, $3, $4, $5, $6, $7,to_tsvector('simple',$8)) RETURNING *`,
     [
       name,
       description,

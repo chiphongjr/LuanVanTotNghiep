@@ -8,6 +8,7 @@ import { createShippingInfoTable } from "../models/shippinginfoTable.js";
 import { createCartItemsTable } from "../models/cartItemsTable.js";
 import { createCartTable } from "../models/cartTable.js";
 import { createCategoryTable } from "../models/categoryTable.js";
+import { createDiscountsTable } from "../models/discountTable.js";
 
 export const createTables = async () => {
   try {
@@ -15,6 +16,7 @@ export const createTables = async () => {
     await createCategoryTable();
     await createProductsTable();
     await createProductReviewsTable();
+    await createDiscountsTable();
     await createOrdersTable();
     await createOrderItemTable();
     await createShippingInfoTable();

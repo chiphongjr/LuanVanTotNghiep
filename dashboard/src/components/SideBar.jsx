@@ -7,6 +7,7 @@ import {
   LogOut,
   BookText,
   X,
+  BadgeDollarSign,
 } from "lucide-react";
 import { NavLink, Navigate, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -34,6 +35,7 @@ const SideBar = () => {
     { icon: <BookText />, title: "Danh mục", path: "/categories" },
     { icon: <Package />, title: "Sản phẩm", path: "/products" },
     { icon: <Users />, title: "Tất cả người dùng", path: "/users" },
+    { icon: <BadgeDollarSign />, title: "Khuyến mãi", path: "/discounts" },
     // { icon: <User />, title: "Thông tin", path: "/profile" },
   ];
 

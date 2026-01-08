@@ -6,10 +6,27 @@ import dotenv from "dotenv";
 dotenv.config();
 
 export const isAuthenticated = catchAsyncErrors(async (req, res, next) => {
-  const { token } = req.cookies;
+  let token;
 
-  if (!token)
+  // ✅ 1. Ưu tiên Bearer Token (Postman, Mobile, API)
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer ")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+  }
+
+  // ✅ 2. Fallback cookie (Browser)
+  if (!token && req.cookies?.token) {
+    token = req.cookies.token;
+  }
+
+  // ❌ Không có token
+  if (!token) {
     return next(new ErrorHandler("Vui lòng đăng nhập để tiếp tục", 401));
+  }
+
+  // 🔐 Verify JWT
   const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
 
   const userResult = await database.query(
@@ -23,8 +40,9 @@ export const isAuthenticated = catchAsyncErrors(async (req, res, next) => {
 
   const user = userResult.rows[0];
 
-  if (user.status === "blocked" && user.role !== "Admin")
+  if (user.status === "blocked" && user.role !== "Admin") {
     return next(new ErrorHandler("Tài khoản của bạn đã bị khóa", 403));
+  }
 
   req.user = user;
   next();

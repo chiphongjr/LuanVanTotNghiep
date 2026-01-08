@@ -3,10 +3,10 @@ import Stripe from "stripe";
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
-export async function generatePaymentIntent(orderId, totalPrice) {
+export async function generatePaymentIntent(orderId, finalPrice) {
   try {
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: totalPrice,
+      amount: finalPrice,
       currency: "vnd",
     });
 

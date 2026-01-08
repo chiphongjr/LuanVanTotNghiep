@@ -7,7 +7,9 @@ import {
 } from "../utils/generatePaymentIntent.js";
 
 export const placeNewOrder = catchAsyncErrors(async (req, res, next) => {
-  const { full_name, city, address, phone, orderedItems } = req.body;
+  const { full_name, city, address, phone, orderedItems, discount_code } =
+    req.body;
+
   if (!full_name || !city || !address || !phone) {
     return next(
       new ErrorHandler("Vui lòng cung cấp đầy đủ thông tin giao hàng", 400)
@@ -18,71 +20,98 @@ export const placeNewOrder = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Số điện thoại không hợp lệ", 400));
   }
 
-  // Parse cart items từ frontend
   const cart_items = Array.isArray(orderedItems)
     ? orderedItems
     : JSON.parse(orderedItems);
+
   if (!cart_items || cart_items.length === 0) {
     return next(new ErrorHandler("Không có sản phẩm trong giỏ hàng", 400));
   }
 
-  // Lấy product info từ database
-  const productIds = cart_items.map((item) => item.product_id);
+  // ===== LẤY SẢN PHẨM =====
+  const productIds = cart_items.map((i) => i.product_id);
   const { rows: products } = await database.query(
     `SELECT id, price, stock, name FROM products WHERE id = ANY($1::uuid[])`,
     [productIds]
   );
 
   let order_total_price = 0;
+  let discount_id = null;
+  let discount_value = 0;
+
+  // ===== ÁP MÃ GIẢM GIÁ (1 LẦN) =====
+  if (discount_code) {
+    const discountResult = await database.query(
+      `SELECT id, value 
+       FROM discounts 
+       WHERE code = $1
+       AND start_date <= CURRENT_DATE
+       AND end_date >= CURRENT_DATE`,
+      [discount_code]
+    );
+
+    if (discountResult.rows.length === 0) {
+      return next(new ErrorHandler("Mã giảm giá không hợp lệ", 400));
+    }
+
+    discount_id = discountResult.rows[0].id;
+    discount_value = discountResult.rows[0].value;
+  }
+
   const order_item_values = [];
   const order_item_placeholders = [];
 
-  // Convert cart items to order items
-  cart_items.forEach((cart_item, index) => {
+  // ===== DUYỆT CART =====
+  for (const [index, cart_item] of cart_items.entries()) {
     const product = products.find((p) => p.id === cart_item.product_id);
 
     if (!product) {
       return next(
-        new ErrorHandler(
-          `ID sản phẩm không tìm thấy: ${cart_item.product_id}`,
-          404
-        )
+        new ErrorHandler(`Không tìm thấy sản phẩm ${cart_item.product_id}`, 404)
       );
     }
 
     if (cart_item.cart_item_quantity > product.stock) {
       return next(
         new ErrorHandler(
-          `Chỉ còn ${product.stock} mặt hàng có sẵn cho ${product.name}`,
+          `Chỉ còn ${product.stock} sản phẩm cho ${product.name}`,
           400
         )
       );
     }
 
-    const order_item_total = product.price * cart_item.cart_item_quantity;
-    order_total_price += order_item_total;
+    order_total_price += product.price * cart_item.cart_item_quantity;
+
+    const offset = index * 6;
+    order_item_placeholders.push(
+      `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${
+        offset + 5
+      }, $${offset + 6})`
+    );
 
     order_item_values.push(
-      null,
+      null, // order_id
       product.id,
       cart_item.cart_item_quantity,
       product.price,
       cart_item.product_image || "",
       product.name
     );
+  }
 
-    const offset = index * 6;
+  // ===== FINAL PRICE =====
+  const final_price = Math.max(order_total_price - discount_value, 0);
 
-    order_item_placeholders.push(
-      `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${
-        offset + 5
-      }, $${offset + 6})`
-    );
-  });
+  if (final_price < 20000) {
+    return next(new ErrorHandler("Đơn hàng tối thiểu 20.000đ", 400));
+  }
 
+  // ===== TẠO ORDER =====
   const orderResult = await database.query(
-    `INSERT INTO orders (buyer_id, total_price) VALUES ($1, $2) RETURNING *`,
-    [req.user.id, order_total_price]
+    `INSERT INTO orders (buyer_id, total_price, discount_id, final_price)
+     VALUES ($1, $2, $3, $4)
+     RETURNING *`,
+    [req.user.id, order_total_price, discount_id, final_price]
   );
 
   const order_id = orderResult.rows[0].id;
@@ -91,41 +120,33 @@ export const placeNewOrder = catchAsyncErrors(async (req, res, next) => {
     order_item_values[i] = order_id;
   }
 
-  if (order_total_price < 20000) {
-    return next(new ErrorHandler("Đơn hàng tối thiểu 20000 đ", 400));
-  }
-
+  // ===== ORDER ITEMS =====
   await database.query(
-    `
-    INSERT INTO order_items (order_id, product_id, quantity, price, image, title)
-    VALUES ${order_item_placeholders.join(", ")} RETURNING *
-    `,
+    `INSERT INTO order_items (order_id, product_id, quantity, price, image, title)
+     VALUES ${order_item_placeholders.join(", ")}`,
     order_item_values
   );
 
+  // ===== SHIPPING =====
   await database.query(
-    `
-    INSERT INTO shipping_info (order_id, full_name, city, address, phone)
-    VALUES ($1, $2, $3, $4, $5) RETURNING *
-    `,
+    `INSERT INTO shipping_info (order_id, full_name, city, address, phone)
+     VALUES ($1, $2, $3, $4, $5)`,
     [order_id, full_name, city, address, phone]
   );
 
-  const paymentResponse = await generatePaymentIntent(
-    order_id,
-    order_total_price
-  );
+  // ===== PAYMENT =====
+  const paymentResponse = await generatePaymentIntent(order_id, final_price);
 
   if (!paymentResponse.success) {
-    return next(new ErrorHandler("Thanh toán thất bại, thử lại", 500));
+    return next(new ErrorHandler("Thanh toán thất bại", 500));
   }
 
   res.status(200).json({
     success: true,
-    message: "Đặt hàng thành công vui lòng tiếp tục đến thanh toán",
+    message: "Đặt hàng thành công",
     orderId: order_id,
+    final_price,
     paymentIntent: paymentResponse.clientSecret,
-    total_price: order_total_price,
   });
 });
 

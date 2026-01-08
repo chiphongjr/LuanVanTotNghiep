@@ -1,5 +1,7 @@
 import express from "express";
 import { config } from "dotenv";
+config({ path: "./config/config.env" });
+
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import fileUpload from "express-fileupload";
@@ -11,16 +13,20 @@ import categoryRouter from "./router/categoryRoutes.js";
 import adminRouter from "./router/adminRoutes.js";
 import orderRouter from "./router/orderRoutes.js";
 import cartRouter from "./router/cartRoutes.js";
+import discountRouter from "./router/discountRoutes.js";
 import Stripe from "stripe";
 import database from "./database/db.js";
 
 const app = express();
 
-config({ path: "./config/config.env" }); 
-
 app.use(
   cors({
-    origin: [process.env.FRONTEND_URL,process.env.DASHBOARD_URL,"https://jrshop.vercel.app","https://admin-jrshop.vercel.app"],
+    origin: [
+      process.env.FRONTEND_URL,
+      process.env.DASHBOARD_URL,
+      "https://jrshop.vercel.app",
+      "https://admin-jrshop.vercel.app",
+    ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
@@ -106,11 +112,12 @@ app.use("/api/v1/product", productRouter);
 app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/order", orderRouter);
 app.use("/api/v1/cart", cartRouter);
+app.use("/api/v1/discount", discountRouter);
 
-if (process.env.NODE_ENV !== "production") {
-  createTables();
-}
-
+// if (process.env.NODE_ENV !== "production") {
+//   createTables();
+// }
+createTables()
 
 app.use(errorMiddleware);
 

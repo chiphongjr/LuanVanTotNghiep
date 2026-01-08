@@ -19,6 +19,7 @@ import Users from "./components/Users";
 import Profile from "./components/Profile";
 import Login from "./pages/Login";
 import { ToastContainer } from "react-toastify";
+import Discounts from "./components/Discounts";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -87,6 +88,7 @@ const App = () => {
                         <Route path="/products" element={<Products />} />
                         <Route path="/categories" element={<Categories />} />
                         <Route path="/users" element={<Users />} />
+                        <Route path="/discounts" element={<Discounts />} />
                         <Route path="/profile" element={<Profile />} />
                         <Route
                           path="*"

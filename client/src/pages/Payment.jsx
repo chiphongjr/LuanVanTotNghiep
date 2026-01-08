@@ -10,6 +10,7 @@ import { placeOrder } from "../store/slices/orderSlice";
 import { getCart } from "../store/slices/cartSlice";
 import { formatVND } from "../utils/formatVND";
 import { resetOrder } from "../store/slices/orderSlice";
+import { axiosInstance } from "../lib/axios";
 
 const Payment = () => {
   const dispatch = useDispatch();
@@ -18,6 +19,9 @@ const Payment = () => {
   const { authUser } = useSelector((state) => state.auth);
   const { cart } = useSelector((state) => state.cart);
   const { paymentIntent } = useSelector((state) => state.order);
+
+  const [discountCode, setDiscountCode] = useState("");
+  const [discountInfo, setDiscountInfo] = useState(null);
 
   const [stripePromise, setStripePromise] = useState(null);
   const [shippingDetails, setShippingDetails] = useState({
@@ -42,15 +46,21 @@ const Payment = () => {
     if (authUser) dispatch(getCart());
   }, [authUser, dispatch]);
 
-  if (!authUser) {
-    navigate("/products");
-    return null;
-  }
-
   const total = cart.cart_items.reduce(
     (sum, item) => sum + item.product_price * item.cart_item_quantity,
     0
   );
+  useEffect(() => {
+    if (discountInfo && discountInfo.value >= total) {
+      alert("Mã giảm giá không áp dụng cho đơn này");
+      setDiscountInfo(null);
+    }
+  }, [discountInfo, total]);
+
+  if (!authUser) {
+    navigate("/products");
+    return null;
+  }
 
   const handlePlaceOrder = (e) => {
     e.preventDefault();
@@ -62,9 +72,27 @@ const Payment = () => {
         phone: shippingDetails.phone,
         address: shippingDetails.address,
         orderedItems: cart.cart_items,
+        discount_code: discountInfo?.code,
       })
     );
   };
+
+  const handleApplyDiscount = async () => {
+    try {
+      const res = await axiosInstance.post("/discount/validate-discount", {
+        code: discountCode,
+        order_total: total,
+      });
+
+      setDiscountInfo(res.data.discount);
+    } catch (error) {
+      alert(error.response?.data?.message || "Áp dụng mã giảm giá thất bại");
+    }
+  };
+
+  const discountValue = discountInfo?.value || 0;
+
+  const finalTotal = Math.max(total - discountValue, 0);
 
   return (
     <div className="min-h-screen pt-24 bg-gray-100">
@@ -214,9 +242,39 @@ const Payment = () => {
                 </div>
 
                 <div className="border-t pt-4 space-y-3">
-                  <div className="flex justify-between text-lg font-semibold border-t pt-3">
-                    <span>Tổng thanh toán</span>
-                    <span className="text-primary">{formatVND(total)}</span>
+                  {!paymentIntent && (
+                    <>
+                      <input
+                        value={discountCode}
+                        onChange={(e) => setDiscountCode(e.target.value)}
+                        placeholder="Nhập mã giảm giá"
+                        className="w-full px-3 py-2 border rounded"
+                      />
+
+                      <button
+                        onClick={handleApplyDiscount}
+                        className="mt-2 w-full bg-green-600 text-white py-2 rounded"
+                      >
+                        Áp dụng
+                      </button>
+                    </>
+                  )}
+
+                  <div className="flex justify-between">
+                    <span>Tạm tính</span>
+                    <span>{formatVND(total)}</span>
+                  </div>
+
+                  {discountInfo && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Giảm giá ({discountInfo.code})</span>
+                      <span>- {formatVND(discountInfo.value)}</span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between font-bold text-lg border-t pt-2">
+                    <span>Thanh toán</span>
+                    <span>{formatVND(finalTotal)}</span>
                   </div>
                 </div>
               </div>

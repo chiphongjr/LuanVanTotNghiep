@@ -56,6 +56,7 @@ const orderSlice = createSlice({
     paymentIntent: null,
     isCancelling: false,
     orderId: null,
+    discount_code:null
   },
   reducers: {
     resetOrder(state) {
@@ -81,7 +82,7 @@ const orderSlice = createSlice({
       })
       .addCase(placeOrder.fulfilled, (state, action) => {
         state.placingOrder = false;
-        (state.finalPrice = action.payload.total_price),
+        (state.finalPrice = action.payload.final_price),
           (state.paymentIntent = action.payload.paymentIntent);
         state.orderId = action.payload.orderId;
       })

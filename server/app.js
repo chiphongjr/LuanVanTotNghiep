@@ -114,10 +114,10 @@ app.use("/api/v1/order", orderRouter);
 app.use("/api/v1/cart", cartRouter);
 app.use("/api/v1/discount", discountRouter);
 
-// if (process.env.NODE_ENV !== "production") {
-//   createTables();
-// }
-createTables()
+if (process.env.NODE_ENV !== "production") {
+  createTables();
+}
+// createTables()
 
 app.use(errorMiddleware);
 

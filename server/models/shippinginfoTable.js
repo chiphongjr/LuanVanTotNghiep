@@ -5,9 +5,14 @@ export async function createShippingInfoTable() {
          id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
          order_id UUID NOT NULL UNIQUE,
          full_name VARCHAR(100) NOT NULL,
-         city VARCHAR(100) NOT NULL,
          address TEXT NOT NULL,
          phone VARCHAR(20) NOT NULL,
+         province_id int,
+         province_name varchar(100),
+         district_id int,
+         district_name varchar(100),
+         ward_code varchar(20),
+         ward_name varchar(100),
          FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE);`;
     await database.query(query);
   } catch (error) {

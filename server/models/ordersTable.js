@@ -10,6 +10,8 @@ export async function createOrdersTable() {
          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
          discount_id UUID,
          final_price int not null check (final_price >=20000),
+         ghn_order_code varchar(50),
+        shipping_fee int default 0,
          FOREIGN KEY (discount_id) REFERENCES discounts(id) on delete restrict,
          FOREIGN KEY (buyer_id) REFERENCES users(id) ON DELETE RESTRICT);`;
     await database.query(query);

@@ -112,7 +112,7 @@ const Orders = () => {
                 </p>
                 <p>
                   <strong>Tổng doanh thu: </strong>
-                  {formatVND(order.total_price)}
+                  {formatVND(order.final_price)}
                 </p>
               </div>
 
@@ -163,7 +163,7 @@ const Orders = () => {
               </p>
               <p>
                 <strong>Địa chỉ: </strong>
-                {order.shipping_info?.address}, {order.shipping_info?.city}
+                {order.shipping_info?.address}, {order.shipping_info?.ward_name},{order.shipping_info?.district_name},{order.shipping_info?.province_name}
               </p>
             </div>
 

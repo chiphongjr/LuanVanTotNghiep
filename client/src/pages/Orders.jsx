@@ -22,6 +22,11 @@ const Orders = () => {
   if (!authUser) navigate("/products");
 
   const handleCancelOrder = (orderId) => {
+    const isConfirmed = window.confirm(
+    "Bạn có chắc chắn muốn hủy đơn hàng này không?"
+  );
+
+  if (!isConfirmed) return; 
     try {
       axiosInstance.post(`/order/cancel-order/${orderId}`);
       toast.success("Hủy đặt hàng thành công");
@@ -155,7 +160,7 @@ const Orders = () => {
                     <div className="text-right">
                       <p className="text-sm text-gray-600 ground">Tổng tiền</p>
                       <p className="text-xl font-bold text-black">
-                        {formatVND(order.total_price)}
+                        {formatVND(order.final_price)}
                       </p>
                     </div>
                   </div>

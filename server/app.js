@@ -14,8 +14,10 @@ import adminRouter from "./router/adminRoutes.js";
 import orderRouter from "./router/orderRoutes.js";
 import cartRouter from "./router/cartRoutes.js";
 import discountRouter from "./router/discountRoutes.js";
+import shippingRouter from "./router/shippingRoutes.js";
 import Stripe from "stripe";
 import database from "./database/db.js";
+import { createGHNOrderInternal } from "./controllers/shippingController.js";
 
 const app = express();
 
@@ -85,6 +87,9 @@ app.post(
             [item.quantity, item.product_id]
           );
         }
+        
+        await createGHNOrderInternal(orderId);
+
       } catch (error) {
         return res
           .status(500)
@@ -113,11 +118,12 @@ app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/order", orderRouter);
 app.use("/api/v1/cart", cartRouter);
 app.use("/api/v1/discount", discountRouter);
+app.use("/api/v1/shipping", shippingRouter);
 
-if (process.env.NODE_ENV !== "production") {
-  createTables();
-}
-// createTables()
+// if (process.env.NODE_ENV !== "production") {
+//   createTables();
+// }
+createTables();
 
 app.use(errorMiddleware);
 

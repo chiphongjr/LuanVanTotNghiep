@@ -22,29 +22,6 @@ export async function generatePaymentIntent(orderId, finalPrice) {
   }
 }
 
-// export async function cancelPaymentIntent(orderId) {
-//   try {
-//     const paymentIntentId = await database.query(
-//       "Select id,payment_intent_id from payments where order_id=$1",
-//       [orderId]
-//     );
-
-//     await stripe.paymentIntents.cancel(
-//       paymentIntentId.rows[0].payment_intent_id
-//     );
-
-//     await database.query(
-//       "Update payments set payment_status = 'Failed' where id = $1",
-//       [paymentIntentId.rows[0].id]
-//     );
-
-//     return { success: true, message: "PaymentIntent đã bị hủy" };
-//   } catch (error) {
-//     return { success: false, message: "Hủy paymentintent thất bại" };
-//   }
-// }
-
-// utils/generatePaymentIntent.js
 export async function cancelPaymentIntent(orderId) {
   try {
     const { rows } = await database.query(

@@ -111,6 +111,11 @@ const Orders = () => {
                   {new Date(order.created_at).toLocaleString("vi-VN")}
                 </p>
                 <p>
+                  <strong>Phí ship: </strong>
+                  {formatVND(order.shipping_fee)}
+                </p>
+                <p><strong>Phương thức thanh toán: </strong>{order.payment_type}</p>
+                <p>
                   <strong>Tổng doanh thu: </strong>
                   {formatVND(order.final_price)}
                 </p>
@@ -163,7 +168,9 @@ const Orders = () => {
               </p>
               <p>
                 <strong>Địa chỉ: </strong>
-                {order.shipping_info?.address}, {order.shipping_info?.ward_name},{order.shipping_info?.district_name},{order.shipping_info?.province_name}
+                {order.shipping_info?.address}, {order.shipping_info?.ward_name}
+                ,{order.shipping_info?.district_name},
+                {order.shipping_info?.province_name}
               </p>
             </div>
 

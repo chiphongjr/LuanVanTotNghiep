@@ -1,15 +1,13 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Check } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
 import PaymentForm from "../components/PaymentForm";
-import { placeOrder } from "../store/slices/orderSlice";
+import { placeOrder, resetOrder } from "../store/slices/orderSlice";
 import { clearCart, getCart } from "../store/slices/cartSlice";
 import { formatVND } from "../utils/formatVND";
-import { resetOrder } from "../store/slices/orderSlice";
 import { axiosInstance } from "../lib/axios";
 
 const Payment = () => {
@@ -18,12 +16,15 @@ const Payment = () => {
 
   const { authUser } = useSelector((state) => state.auth);
   const { cart } = useSelector((state) => state.cart);
-  const { paymentIntent, placingOrder, orderId } = useSelector((state) => state.order);
+  const { paymentIntent, placingOrder, orderId } = useSelector(
+    (state) => state.order
+  );
+
+  const [stripePromise, setStripePromise] = useState(null);
 
   const [discountCode, setDiscountCode] = useState("");
   const [discountInfo, setDiscountInfo] = useState(null);
 
-  const [stripePromise, setStripePromise] = useState(null);
   const [provinces, setProvinces] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [wards, setWards] = useState([]);
@@ -33,28 +34,30 @@ const Payment = () => {
   const [ward, setWard] = useState(null);
 
   const [shippingFee, setShippingFee] = useState(0);
-
   const [paymentType, setPaymentType] = useState("Online");
 
-
-  
-
   const [shippingDetails, setShippingDetails] = useState({
-    full_name: "",
-    phone: "",
-    address: "",
-    province_id: "",
-    province_name: "",
-
-    district_id: "",
-    district_name: "",
-
-    ward_code: "",
-    ward_name: "",
+    full_name: authUser.name,
+    phone: authUser.phone,
+    address: authUser.address,
   });
-
   useEffect(() => {
     dispatch(resetOrder());
+    const p = {
+      ProvinceID: authUser.province_id,
+      ProvinceName: authUser.province_name,
+    };
+    setProvince(p);
+    const d = {
+      DistrictID: authUser.district_id,
+      DistrictName: authUser.district_name,
+    };
+    setDistrict(d);
+    const w = {
+      WardCode: authUser.ward_code,
+      WardName: authUser.ward_name,
+    };
+    setWard(w);
   }, [dispatch]);
 
   /* ================= LOAD STRIPE ================= */
@@ -72,12 +75,6 @@ const Payment = () => {
     (sum, item) => sum + item.product_price * item.cart_item_quantity,
     0
   );
-  useEffect(() => {
-    if (discountInfo && discountInfo.value >= total) {
-      alert("Mã giảm giá không áp dụng cho đơn này");
-      setDiscountInfo(null);
-    }
-  }, [discountInfo, total]);
 
   useEffect(() => {
     axiosInstance.get("/shipping/provinces").then((res) => {
@@ -88,8 +85,7 @@ const Payment = () => {
   useEffect(() => {
     if (!province) return;
 
-    setDistrict(null);
-    setWard(null);
+
     setDistricts([]);
     setWards([]);
     setShippingFee(0);
@@ -99,7 +95,6 @@ const Payment = () => {
         params: { province_id: province.ProvinceID },
       })
       .then((res) => setDistricts(res.data.districts));
-
     setShippingDetails((prev) => ({
       ...prev,
       province_id: province.ProvinceID,
@@ -110,7 +105,7 @@ const Payment = () => {
   useEffect(() => {
     if (!district) return;
 
-    setWard(null);
+
     setWards([]);
     setShippingFee(0);
 
@@ -143,30 +138,29 @@ const Payment = () => {
           ...prev,
           ward_code: ward.WardCode,
           ward_name: ward.WardName,
-
         }));
       });
   }, [ward]);
 
- useEffect(() => {
-  // COD: đặt hàng xong, KHÔNG có paymentIntent
-  if (
-    !placingOrder &&
-    orderId &&
-    paymentIntent === null &&
-    paymentType === "COD"
-  ) {
-    dispatch(clearCart());
-    navigate("/"); // 👈 về trang chủ
-  }
-}, [placingOrder, orderId, paymentIntent, paymentType, dispatch, navigate]);
+  useEffect(() => {
+    // COD: đặt hàng xong, KHÔNG có paymentIntent
+    if (
+      !placingOrder &&
+      orderId &&
+      paymentIntent === null &&
+      paymentType === "COD"
+    ) {
+      dispatch(clearCart());
+      navigate("/"); // 👈 về trang chủ
+    }
+  }, [placingOrder, orderId, paymentIntent, paymentType, dispatch, navigate]);
 
   if (!authUser) {
     navigate("/products");
     return null;
   }
 
-  const handlePlaceOrder = (e) => {
+  const handlePlaceOrder = async (e) => {
     e.preventDefault();
 
     dispatch(
@@ -187,11 +181,13 @@ const Payment = () => {
 
         shipping_fee: shippingFee,
 
-
         payment_type: paymentType, // 👈 THÊM
-        
       })
     );
+    if (paymentType === "COD") {
+      await dispatch(clearCart());
+      navigate("/");
+    }
   };
 
   const handleApplyDiscount = async () => {
@@ -370,33 +366,32 @@ const Payment = () => {
                   </div>
 
                   <div className="mt-6">
-  <label className="block text-sm font-medium mb-2">
-    Phương thức thanh toán
-  </label>
+                    <label className="block text-sm font-medium mb-2">
+                      Phương thức thanh toán
+                    </label>
 
-  <div className="flex gap-4">
-    <label className="flex items-center gap-2">
-      <input
-        type="radio"
-        value="Online"
-        checked={paymentType === "Online"}
-        onChange={() => setPaymentType("Online")}
-      />
-      Thanh toán Online
-    </label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          value="Online"
+                          checked={paymentType === "Online"}
+                          onChange={() => setPaymentType("Online")}
+                        />
+                        Thanh toán Online
+                      </label>
 
-    <label className="flex items-center gap-2">
-      <input
-        type="radio"
-        value="COD"
-        checked={paymentType === "COD"}
-        onChange={() => setPaymentType("COD")}
-      />
-      Thanh toán khi nhận hàng (COD)
-    </label>
-  </div>
-</div>
-
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          value="COD"
+                          checked={paymentType === "COD"}
+                          onChange={() => setPaymentType("COD")}
+                        />
+                        Thanh toán khi nhận hàng (COD)
+                      </label>
+                    </div>
+                  </div>
 
                   <button
                     type="submit"
@@ -405,13 +400,13 @@ const Payment = () => {
                     Tiếp tục thanh toán
                   </button>
                 </form>
-
-              )} {/* STRIPE PAYMENT */}
-  {paymentIntent && paymentType === "Online" && (
-    <Elements stripe={stripePromise}>
-      <PaymentForm />
-    </Elements>
-  )}
+              )}{" "}
+              {/* STRIPE PAYMENT */}
+              {paymentIntent && paymentType === "Online" && (
+                <Elements stripe={stripePromise}>
+                  <PaymentForm />
+                </Elements>
+              )}
             </div>
 
             {/* ========== RIGHT ========== */}

@@ -19,6 +19,8 @@ export const adminSlice = createSlice({
     revenueGrowth: "",
     newUsersThisMonth: 0,
     currentMonthSales: 0,
+    totalProducts: 0,
+    top5Users:[]
   },
   reducers: {
     getAllUsersRequest(state) {
@@ -60,6 +62,8 @@ export const adminSlice = createSlice({
       state.revenueGrowth = action.payload.revenueGrowth;
       state.newUsersThisMonth = action.payload.newUsersThisMonth;
       state.currentMonthSales = action.payload.currentMonthSales;
+      state.top5Users = action.payload.top5Users;
+      
     },
     getStatsFailed(state) {
       state.loading = false;
@@ -127,15 +131,14 @@ export const getDashboardStats = () => async (dispatch) => {
 };
 
 export const updateUserStatus = (id, status) => async (dispatch) => {
-  console.log(id)
-  console.log(status)
+  console.log(id);
+  console.log(status);
   try {
     dispatch(adminSlice.actions.updateUserStatusRequest());
 
-    const res = await axiosInstance.put(
-      `/admin/update-user-status/${id}`,
-      { status }
-    );
+    const res = await axiosInstance.put(`/admin/update-user-status/${id}`, {
+      status,
+    });
 
     dispatch(adminSlice.actions.updateUserStatusSuccess(res.data.user));
 

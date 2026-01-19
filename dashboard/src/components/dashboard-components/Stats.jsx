@@ -1,33 +1,32 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import {formatVND} from "../../utils/formatVND.js"
+import { formatVND } from "../../utils/formatVND.js";
 
 const Stats = () => {
-  const [revenueChange, setRevenueChange] = useState("");
+  // const [revenueChange, setRevenueChange] = useState("");
   const {
     totalUsersCount,
     todayRevenue,
-    yesterdayRevenue,
+    // yesterdayRevenue,
     totalRevenueAllTime,
   } = useSelector((state) => state.admin);
 
-  
-  useEffect(() => {
-    let change =
-      yesterdayRevenue === 0
-        ? 100
-        : ((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100;
-    const revenueChangeText = `${
-      change >= 0 ? "+" : "-"
-    }${change.toFixed()}% từ ngày hôm qua`;
-    setRevenueChange(revenueChangeText);
-  }, []);
+  // useEffect(() => {
+  //   let change =
+  //     yesterdayRevenue === 0
+  //       ? 100
+  //       : ((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100;
+  //   const revenueChangeText = `${
+  //     change >= 0 ? "+" : "-"
+  //   }${change.toFixed()}% từ ngày hôm qua`;
+  //   setRevenueChange(revenueChangeText);
+  // }, []);
 
   const stats = [
     {
       title: "Doanh thu hôm nay",
       value: formatVND(todayRevenue),
-      change: revenueChange,
+      // change: revenueChange,
     },
 
     {

@@ -40,10 +40,7 @@ const MonthlySalesChart = () => {
           <YAxis width={95} tickFormatter={(v) => formatVND(v)} />
           <Tooltip formatter={(v) => formatVND(v)} />
 
-          <Bar
-            dataKey="totalSales"
-            fill="blue"
-          />
+          <Bar dataKey="totalSales" fill="blue" />
         </BarChart>
       </ResponsiveContainer>
     </div>

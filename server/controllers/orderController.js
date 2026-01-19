@@ -21,12 +21,18 @@ export const placeNewOrder = catchAsyncErrors(async (req, res, next) => {
     ward_code,
     ward_name,
     shipping_fee,
-   
-    payment_type, // 👈 THÊM
 
+    payment_type, // 👈 THÊM
   } = req.body;
 
-  if (!full_name || !address || !phone || !province_id || !district_id || !ward_code) {
+  if (
+    !full_name ||
+    !address ||
+    !phone ||
+    !province_id ||
+    !district_id ||
+    !ward_code
+  ) {
     return next(
       new ErrorHandler("Vui lòng cung cấp đầy đủ thông tin giao hàng", 400)
     );
@@ -35,9 +41,9 @@ export const placeNewOrder = catchAsyncErrors(async (req, res, next) => {
   if (!/^(\+84|0)\d{9}$/.test(phone)) {
     return next(new ErrorHandler("Số điện thoại không hợp lệ", 400));
   }
-if (!["Online", "COD"].includes(payment_type)) {
-  return next(new ErrorHandler("Phương thức thanh toán không hợp lệ", 400));
-}
+  if (!["Online", "COD"].includes(payment_type)) {
+    return next(new ErrorHandler("Phương thức thanh toán không hợp lệ", 400));
+  }
   const cart_items = Array.isArray(orderedItems)
     ? orderedItems
     : JSON.parse(orderedItems);
@@ -123,8 +129,10 @@ if (!["Online", "COD"].includes(payment_type)) {
     0
   );
 
-  if (final_price < 20000) {
-    return next(new ErrorHandler("Đơn hàng tối thiểu 20.000đ", 400));
+  if (payment_type === "Online" && final_price < 20000) {
+    return next(
+      new ErrorHandler("Đơn hàng dưới 20.000 đ, chọn COD để đặt hàng", 400)
+    );
   }
 
   // ===== TẠO ORDER =====
@@ -132,7 +140,7 @@ if (!["Online", "COD"].includes(payment_type)) {
     `INSERT INTO orders (buyer_id, total_price, discount_id, final_price,shipping_fee)
      VALUES ($1, $2, $3, $4,$5)
      RETURNING *`,
-    [req.user.id, order_total_price, discount_id, final_price,shipping_fee]
+    [req.user.id, order_total_price, discount_id, final_price, shipping_fee]
   );
 
   const order_id = orderResult.rows[0].id;
@@ -168,41 +176,37 @@ if (!["Online", "COD"].includes(payment_type)) {
       district_name,
       ward_code,
       ward_name,
-   
-   
     ]
   );
 
-//Cod
-if (payment_type === "COD") {
-
-  for (const cart_item of cart_items) {
-    await database.query(
-      `
+  //Cod
+  if (payment_type === "COD") {
+    for (const cart_item of cart_items) {
+      await database.query(
+        `
       UPDATE products
       SET stock = stock - $1
       WHERE id = $2 AND stock >= $1
       `,
-      [cart_item.cart_item_quantity, cart_item.product_id]
-    );
-  }
+        [cart_item.cart_item_quantity, cart_item.product_id]
+      );
+    }
 
-  // 👉 Tạo payment COD
-  await database.query(
-    `INSERT INTO payments (order_id, payment_type, payment_status)
+    // 👉 Tạo payment COD
+    await database.query(
+      `INSERT INTO payments (order_id, payment_type, payment_status)
      VALUES ($1, 'COD', 'COD')`,
-    [order_id]
-  );
+      [order_id]
+    );
 
-  return res.status(200).json({
-    success: true,
-    message: "Đặt hàng COD thành công",
-    orderId: order_id,
-    final_price,
-    paymentIntent: null, // ❗ KHÔNG CÓ Stripe
-  });
-}
-
+    return res.status(200).json({
+      success: true,
+      message: "Đặt hàng COD thành công",
+      orderId: order_id,
+      final_price,
+      paymentIntent: null, // ❗ KHÔNG CÓ Stripe
+    });
+  }
 
   // ===== PAYMENT =====
   const paymentResponse = await generatePaymentIntent(order_id, final_price);
@@ -270,7 +274,10 @@ export const fetchMyOrders = catchAsyncErrors(async (req, res, next) => {
  'quantity', oi.quantity,
  'price', oi.price,
  'image', oi.image,
- 'title', oi.title
+ 'title', oi.title,
+  'shipping_fee',o.shipping_fee,
+  'payment_type',p.payment_type
+
   ) 
  ) FILTER (WHERE oi.id IS NOT NULL), '[]'
  ) AS order_items,
@@ -301,7 +308,7 @@ GROUP BY o.id, s.id
 
 export const fetchAllOrders = catchAsyncErrors(async (req, res, next) => {
   const result = await database.query(`
-            SELECT o.*,
+            SELECT o.*,p.payment_type,
  COALESCE(json_agg(
  json_build_object(
  'order_item_id', oi.id,
@@ -310,7 +317,8 @@ export const fetchAllOrders = catchAsyncErrors(async (req, res, next) => {
  'quantity', oi.quantity,
  'price', oi.price,
  'image', oi.image,
- 'title', oi.title
+ 'title', oi.title,
+ 'shipping_fee',o.shipping_fee
 )
 ) FILTER (WHERE oi.id IS NOT NULL), '[]' ) AS order_items, json_build_object(
 'full_name', s.full_name,
@@ -325,7 +333,7 @@ LEFT JOIN order_items oi ON o.id = oi.order_id
 LEFT JOIN shipping_info s ON o.id = s.order_id
  left join payments p on o.id = p.order_id
 WHERE (p.payment_type = 'Online' and o.paid_at IS NOT NULL) or (p.payment_type ='COD' and o.order_status in ('Processing','Shipped','Delivered','Cancelled'))
-GROUP BY o.id, s.id
+GROUP BY o.id, s.id, p.payment_type
         `);
 
   res.status(200).json({
@@ -373,18 +381,17 @@ export const updateOrderStatus = catchAsyncErrors(async (req, res, next) => {
   }
 
   if (status === "Delivered") {
-  await database.query(
-    `UPDATE payments 
+    await database.query(
+      `UPDATE payments 
      SET payment_status = 'Paid'
      WHERE order_id = $1`,
-    [orderId]
-  );
+      [orderId]
+    );
 
-  await database.query(
-    `UPDATE orders SET paid_at = NOW() WHERE id = $1`,
-    [orderId]
-  );
-}
+    await database.query(`UPDATE orders SET paid_at = NOW() WHERE id = $1`, [
+      orderId,
+    ]);
+  }
 
   const updatedOrder = await database.query(
     `
@@ -392,8 +399,6 @@ export const updateOrderStatus = catchAsyncErrors(async (req, res, next) => {
     `,
     [status, orderId]
   );
-
-  
 
   res.status(200).json({
     success: true,
@@ -468,7 +473,6 @@ export const cancelOrderPayment = catchAsyncErrors(async (req, res, next) => {
 });
 
 export const cancelOrder = catchAsyncErrors(async (req, res, next) => {
-
   const { orderId } = req.params;
 
   const result = await database.query(`select * from orders where id = $1`, [
@@ -507,3 +511,4 @@ export const cancelOrder = catchAsyncErrors(async (req, res, next) => {
     message: "Hủy đặt hàng thành công",
   });
 });
+

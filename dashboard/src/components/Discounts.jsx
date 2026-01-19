@@ -1,18 +1,25 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Plus } from "lucide-react";
 
 import { fetchAllDiscounts } from "../store/slices/discountSlice";
-import { toggleCreateDiscountModal } from "../store/slices/extraSlice";
+import {
+  toggleCreateDiscountModal,
+  toggleUpdateDiscountModal,
+} from "../store/slices/extraSlice";
 import CreateDiscountModal from "../modals/CreateDiscountModal";
 import { formatVND } from "../../../client/src/utils/formatVND";
+import UpdateDiscountModal from "../modals/UpdateDiscountModal";
 
 const Discounts = () => {
   const dispatch = useDispatch();
 
   const { discounts, loading } = useSelector((state) => state.discount);
 
-  const { isCreateDiscountModalOpened } = useSelector((state) => state.extra);
+  const { isCreateDiscountModalOpened, isUpdateDiscountModalOpened } =
+    useSelector((state) => state.extra);
+
+  const [selectedDiscount, setSelectedDiscount] = useState(null);
 
   useEffect(() => {
     dispatch(fetchAllDiscounts());
@@ -71,13 +78,20 @@ const Discounts = () => {
                       </td>
 
                       <td className="px-4 py-3 flex gap-2">
-                        <button className="px-3 py-2 rounded-md bg-blue-gradient text-white font-semibold">
+                        <button
+                          className="px-3 py-2 rounded-md bg-blue-gradient text-white font-semibold"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedDiscount(discount);
+                            dispatch(toggleUpdateDiscountModal());
+                          }}
+                        >
                           Cập nhật
                         </button>
 
-                        <button className="px-3 py-2 rounded-md bg-red-gradient text-white font-semibold">
+                        {/* <button className="px-3 py-2 rounded-md bg-red-gradient text-white font-semibold">
                           Xóa
-                        </button>
+                        </button> */}
                       </td>
                     </tr>
                   ))}
@@ -102,6 +116,9 @@ const Discounts = () => {
       </button>
 
       {isCreateDiscountModalOpened && <CreateDiscountModal />}
+      {isUpdateDiscountModalOpened && (
+        <UpdateDiscountModal selectedDiscount={selectedDiscount} />
+      )}
     </>
   );
 };

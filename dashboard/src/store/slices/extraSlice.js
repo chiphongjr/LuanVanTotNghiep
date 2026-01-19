@@ -8,6 +8,7 @@ const extraSlice = createSlice({
     isCreateProductModalOpened: false,
     isUpdateProductModalOpened: false,
     isCreateDiscountModalOpened: false,
+    isUpdateDiscountModalOpened: false,
   },
   reducers: {
     toggleNavbar: (state) => {
@@ -25,6 +26,9 @@ const extraSlice = createSlice({
     toggleCreateDiscountModal: (state) => {
       state.isCreateDiscountModalOpened = !state.isCreateDiscountModalOpened;
     },
+    toggleUpdateDiscountModal: (state) => {
+      state.isUpdateDiscountModalOpened = !state.isUpdateDiscountModalOpened;
+    },
   },
 });
 
@@ -35,6 +39,7 @@ export const {
   toggleViewProductModal,
   toggleUpdateProductModal,
   toggleCreateDiscountModal,
+  toggleUpdateDiscountModal,
 } = extraSlice.actions;
 
 export default extraSlice.reducer;

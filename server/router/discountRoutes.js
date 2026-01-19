@@ -2,6 +2,7 @@ import express from "express";
 import {
   createDiscount,
   fetchAllDiscount,
+  updateDiscount,
   validateDiscount,
 } from "../controllers/discountController.js";
 import {
@@ -25,6 +26,12 @@ router.get(
   fetchAllDiscount
 );
 
-router.post("/validate-discount",isAuthenticated,validateDiscount);
+router.post("/validate-discount", isAuthenticated, validateDiscount);
 
+router.put(
+  "/admin/update-discount/:discountId",
+  isAuthenticated,
+  authorizedRoles("Admin"),
+  updateDiscount
+);
 export default router;

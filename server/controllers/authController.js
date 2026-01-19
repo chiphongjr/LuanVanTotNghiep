@@ -55,10 +55,9 @@ export const login = catchAsyncErrors(async (req, res, next) => {
 });
 
 export const getUser = catchAsyncErrors(async (req, res, next) => {
-  const user = await database.query(
-    "SELECT id, name, email, role, avatar, created_at FROM users WHERE id=$1",
-    [req.user.id]
-  );
+  const user = await database.query("SELECT * FROM users WHERE id=$1", [
+    req.user.id,
+  ]);
 
   res.status(200).json({ success: true, user: user.rows[0] });
 });
@@ -70,7 +69,7 @@ export const logout = catchAsyncErrors(async (req, res, next) => {
     .clearCookie("token", {
       httpOnly: true,
       secure: isProd,
-      sameSite: isProd? "none" : "lax",
+      sameSite: isProd ? "none" : "lax",
     })
     .status(200)
     .json({
@@ -187,9 +186,34 @@ export const updatePassword = catchAsyncErrors(async (req, res, next) => {
 });
 
 export const updateProfile = catchAsyncErrors(async (req, res, next) => {
-  const { name, email } = req.body;
-  if (!name || !email)
-    return next(new ErrorHandler("Vui lòng điền đầy đủ thông tin", 400));
+  const {
+    name,
+    email,
+    phone,
+    address,
+    province_id,
+    province_name,
+    district_id,
+    district_name,
+    ward_code,
+    ward_name,
+  } = req.body;
+  if (
+    !name ||
+    !email ||
+    !phone ||
+    !address ||
+    !province_id ||
+    !province_name ||
+    !district_id ||
+    !district_name ||
+    !ward_code ||
+    !ward_name
+  )
+  return next(new ErrorHandler("Vui lòng điền đầy đủ thông tin", 400));
+  if (!/^(\+84|0)\d{9}$/.test(phone)) {
+    return next(new ErrorHandler("Số điện thoại không hợp lệ", 400));
+  }
   if (name.trim().length === 0 || email.trim().length === 0)
     return next(new ErrorHandler("Tên và email không được để trống", 400));
   let avatarData = {};
@@ -214,13 +238,38 @@ export const updateProfile = catchAsyncErrors(async (req, res, next) => {
   let user;
   if (Object.keys(avatarData).length === 0) {
     user = await database.query(
-      "Update users set name =$1, email = $2 where id = $3 returning *",
-      [name, email, req.user.id]
+      `Update users set name =$1, email = $2, phone=$3, address=$4, province_id = $5, province_name=$6,district_id = $7, district_name=$8, ward_code=$9, ward_name=$10 where id = $11 returning *`,
+      [
+        name,
+        email,
+        phone,
+        address,
+        province_id,
+        province_name,
+        district_id,
+        district_name,
+        ward_code,
+        ward_name,
+        req.user.id,
+      ]
     );
   } else {
     user = await database.query(
-      "Update users set name =$1, email = $2, avatar=$3 where id = $4 returning *",
-      [name, email, avatarData, req.user.id]
+      "Update users set name =$1, email = $2, avatar=$3 ,phone=$4, address=$5, province_id = $6, province_name=$7,district_id = $8, district_name=$9, ward_code=$10, ward_name=$11 where id = $12 returning *",
+      [
+        name,
+        email,
+        avatarData,
+        phone,
+        address,
+        province_id,
+        province_name,
+        district_id,
+        district_name,
+        ward_code,
+        ward_name,
+        req.user.id,
+      ]
     );
   }
   res.status(200).json({

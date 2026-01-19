@@ -10,6 +10,7 @@ const CreateProductModal = () => {
   const { createLoading } = useSelector((state) => state.product);
   const { categories } = useSelector((state) => state.category);
   const dispatch = useDispatch();
+  // const [previewImages, setPreviewImages] = useState([]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -157,18 +158,54 @@ const CreateProductModal = () => {
               required
             />
 
-            <input
+            {/* <input
               type="file"
               multiple
               accept="image/*"
-              onChange={(e) =>
+              onChange={(e) => {
+                const files = Array.from(e.target.files);
+
                 setFormData({
                   ...formData,
-                  images: Array.from(e.target.files),
-                })
-              }
+                  images: files,
+                });
+
+                const previews = files.map((file) => URL.createObjectURL(file));
+                setPreviewImages(previews);
+              }}
               className="border px-4 py-2 rounded col-span-1 md:col-span-2"
               required
+            />
+
+            {previewImages && (
+              <div className="grid grid-cols-1 md:grid-cols-2 col-span-6">
+                {previewImages.map((img, index) => (
+                  <div key={index} className="relative">
+                    <img src={img} alt="preview" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newImages = [...formData.images];
+                        const newPreviews = [...previewImages];
+
+                        newImages.splice(index, 1);
+                        newPreviews.splice(index, 1);
+
+                        setFormData({ ...formData, images: newImages });
+                        setPreviewImages(newPreviews);
+                      }}
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 text-sm"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )} */}
+            <input type="file" accept="images/*" multiple 
+              onChange={(e)=>setFormData({...formData,images:Array.from(e.target.files)})}
+              required
+              className="border px-4 py-2 rounded col-span-1 md:col-span-2"
             />
 
             <textarea

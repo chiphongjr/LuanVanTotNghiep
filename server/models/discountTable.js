@@ -4,7 +4,7 @@ export async function createDiscountsTable() {
   try {
     const query = `create table if not exists discounts (
         id UUID default gen_random_uuid() primary key,
-        code varchar(50) not null,
+        code varchar(50) not null unique,
         value int not null,
         start_date DATE not null,
         end_date DATE not null,

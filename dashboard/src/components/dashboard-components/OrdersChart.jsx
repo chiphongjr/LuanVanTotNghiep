@@ -5,8 +5,8 @@ const OrdersChart = () => {
   const { orderStatusCounts } = useSelector((state) => state.admin);
 
   const statusColors = {
-    Processing: "#facc15", // yellow
-    Shipped: "#3b82f6", // blue
+    Processing: "blue", // yellow
+    Shipped: "yellow", // blue
     Delivered: "#22c55e", // green
     Cancelled: "#ef4444", // red
   };
@@ -14,6 +14,14 @@ const OrdersChart = () => {
     status,
     count: parseInt(orderStatusCounts[status]),
   }));
+
+  const labelStatus={
+    Processing:"Chờ xử lý",
+    Delivered:"Đã giao",
+    Shipped:"Đang giao",
+    Cancelled:"Đã hủy",
+  }
+  
 
   return (
     <>
@@ -40,6 +48,20 @@ const OrdersChart = () => {
             <Tooltip />
           </PieChart>
         </ResponsiveContainer>
+
+        <div className="grid grid-cols-2 gap-2">
+          {orderStatusData.map((item) => (
+            <div key={item.status} className="flex items-center gap-2">
+              <span
+                className="w-5 h-3 rounded-sm"
+                style={{ backgroundColor: statusColors[item.status] }}
+              />
+              <span>
+                {labelStatus[item.status]}: {item.count}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     </>
   );

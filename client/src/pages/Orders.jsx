@@ -158,6 +158,7 @@ const Orders = () => {
                       </span>
                     </div>
                     <div className="text-right">
+                      <p className="text-sm text-gray-600 ground">Phí ship: {formatVND(order.shipping_fee)}</p>
                       <p className="text-sm text-gray-600 ground">Tổng tiền</p>
                       <p className="text-xl font-bold text-black">
                         {formatVND(order.final_price)}

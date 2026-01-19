@@ -43,7 +43,7 @@ const TopSellingProducts = () => {
                       {element.total_sold}
                     </td>
                     <td className="px-4 py-3 font-semibold">
-                      {element.ratings} ⭐
+                      {element.ratings ? `${element.ratings} ⭐` : "0.00 ⭐"} 
                     </td>
                   </tr>
                 );

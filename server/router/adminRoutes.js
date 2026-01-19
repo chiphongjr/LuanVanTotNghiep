@@ -4,6 +4,7 @@ import {
   deleteUser,
   dashboardStats,
   updateUserStatus,
+  fromDateToDate,
 } from "../controllers/adminController.js";
 import {
   authorizedRoles,
@@ -32,5 +33,7 @@ router.get(
 );
 
 router.put("/update-user-status/:id",isAuthenticated,authorizedRoles("Admin"),updateUserStatus);
+
+router.post("/from-date-to-date",fromDateToDate)
 
 export default router;

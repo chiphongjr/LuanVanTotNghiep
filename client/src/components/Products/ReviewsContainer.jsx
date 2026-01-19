@@ -80,10 +80,7 @@ const ReviewsContainer = ({ product, productReviews }) => {
       {productReviews && productReviews.length > 0 && (
         <div className="space-y-6">
           {productReviews.map((review) => (
-            <div
-              key={review.review_id}
-              className="border rounded-lg p-6 bg-white"
-            >
+            <div key={review.review_id} className="border rounded-lg p-6 bg-white">
               <div className="flex items-center space-x-4">
                 <img
                   src={review.review?.avatar?.url || "/avatar-holder.avif"}
@@ -101,7 +98,7 @@ const ReviewsContainer = ({ product, productReviews }) => {
                   <div className="flex">
                     {[...Array(5)].map((_, i) => (
                       <Star
-                        key={i}
+                        key={`${review.review_id}-star-${i}`} // ✅ DUY NHẤT
                         className={`w-4 h-4 ${
                           i < Math.ceil(review.rating)
                             ? "text-yellow-400 fill-current"

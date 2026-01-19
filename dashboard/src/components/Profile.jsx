@@ -148,7 +148,7 @@ const Profile = () => {
               type="password"
               name="confirmPassword"
               onChange={handlePasswordChange}
-              value={passwordData.confirmPassword}
+              value={passwordData.confirmNewPassword}
               className="p-2 border rounded-md"
               placeholder="Nhập lại mật khẩu mới"
             />

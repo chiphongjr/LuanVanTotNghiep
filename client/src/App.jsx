@@ -20,6 +20,7 @@ import About from "./pages/About";
 import FAQ from "./pages/FAQ";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
+import { getCart } from "./store/slices/cartSlice";
 
 const App = () => {
   const { authUser, isCheckingAuth } = useSelector((state) => state.auth);
@@ -28,6 +29,7 @@ const App = () => {
 
   useEffect(() => {
     dispatch(getUser());
+    dispatch(getCart());
     dispatch(fetchAllProducts({}));
   }, [dispatch]);
 

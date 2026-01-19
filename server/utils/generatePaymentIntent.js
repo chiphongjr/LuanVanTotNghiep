@@ -29,7 +29,8 @@ export async function cancelPaymentIntent(orderId) {
       [orderId]
     );
 
-    if (!rows.length) return { success: false, message: "Payment không tồn tại" };
+    if (!rows.length)
+      return { success: false, message: "Payment không tồn tại" };
 
     const payment = rows[0];
 
@@ -37,9 +38,10 @@ export async function cancelPaymentIntent(orderId) {
     await stripe.paymentIntents.cancel(payment.payment_intent_id);
 
     // Cập nhật DB
-    await database.query("UPDATE payments SET payment_status='Failed' WHERE id=$1", [
-      payment.id,
-    ]);
+    await database.query(
+      "UPDATE payments SET payment_status='Failed' WHERE id=$1",
+      [payment.id]
+    );
 
     return { success: true, message: "PaymentIntent đã bị hủy" };
   } catch (error) {

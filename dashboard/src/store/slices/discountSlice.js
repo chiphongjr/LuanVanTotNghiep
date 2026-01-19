@@ -1,7 +1,10 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { axiosInstance } from "../../lib/axios";
 import { toast } from "react-toastify";
-import { toggleCreateDiscountModal } from "./extraSlice";
+import {
+  toggleCreateDiscountModal,
+  toggleUpdateDiscountModal,
+} from "./extraSlice";
 
 export const createNewDiscount = createAsyncThunk(
   "discount/createNewDiscount",
@@ -13,7 +16,7 @@ export const createNewDiscount = createAsyncThunk(
 
       toast.success(res.data.message || "Thêm mã giảm giá thành công");
       thunkAPI.dispatch(fetchAllDiscounts());
-      thunkAPI.dispatch(toggleCreateDiscountModal())
+      thunkAPI.dispatch(toggleCreateDiscountModal());
 
       return res.data.discount;
     } catch (error) {
@@ -32,6 +35,27 @@ export const fetchAllDiscounts = createAsyncThunk(
     } catch (error) {
       toast.error(error.response?.data?.message);
       return thunkAPI.rejectWithValue(error.response.data);
+    }
+  }
+);
+export const updateDiscount = createAsyncThunk(
+  "discount/updateDiscount",
+  async ({ data, discountId }, thunkAPI) => {
+    try {
+      const res = await axiosInstance.put(
+        `/discount/admin/update-discount/${discountId}`,
+        data,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+      toast.success(res.data.message || "Cập nhật mã giảm thành công");
+      thunkAPI.dispatch(fetchAllDiscounts());
+      thunkAPI.dispatch(toggleUpdateDiscountModal());
+      return res.data.updatedDiscount;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Cập nhật mã giảm thất bại");
+      return thunkAPI.rejectWithValue(error.response?.data);
     }
   }
 );
@@ -62,6 +86,18 @@ const discountSlice = createSlice({
         state.discounts = action.payload;
       })
       .addCase(fetchAllDiscounts.rejected, (state) => {
+        state.loading = false;
+      })
+      .addCase(updateDiscount.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(updateDiscount.fulfilled, (state, action) => {
+        state.loading = false;
+        state.discounts = state.discounts.map((discount) =>
+          discount.id === action.payload.id ? action.payload : discount
+        );
+      })
+      .addCase(updateDiscount.rejected, (state) => {
         state.loading = false;
       });
   },

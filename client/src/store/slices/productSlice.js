@@ -72,7 +72,7 @@ export const postReview = createAsyncThunk(
 
 export const deleteReview = createAsyncThunk(
   "product/delete/review",
-  async ({  reviewId }, thunkAPI) => {
+  async ({ reviewId }, thunkAPI) => {
     try {
       const res = await axiosInstance.delete(
         `/product/delete/review/${reviewId}`
@@ -197,17 +197,19 @@ const productSlice = createSlice({
       // })
 
       .addCase(postReview.fulfilled, (state, action) => {
-  state.isPostingReview = false;
+        state.isPostingReview = false;
 
-  state.productReviews.unshift({
-    ...action.payload.review,
-    reviewer: {
-      id: action.payload.authUser.id,
-      name: action.payload.authUser.name,
-      avatar: action.payload.authUser.avatar,
-    },
-  });
-})
+        state.productReviews.unshift({
+          review_id: action.payload.review.id, // 🔥 FIX QUAN TRỌNG
+          rating: action.payload.review.rating,
+          comment: action.payload.review.comment,
+          reviewer: {
+            id: action.payload.authUser.id,
+            name: action.payload.authUser.name,
+            avatar: action.payload.authUser.avatar,
+          },
+        });
+      })
 
       .addCase(postReview.rejected, (state) => {
         state.isPostingReview = false;
